@@ -12,16 +12,28 @@ jobs:
   sonarqube:
     runs-on: ubuntu-latest
 
+    env:
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Check Sonar host and connectivity
+        run: |
+          if [ -z "$SONAR_HOST_URL" ]; then
+            echo "ERROR: SONAR_HOST_URL is not set"; exit 1
+          else
+            echo "SONAR_HOST_URL is set to $SONAR_HOST_URL"
+          fi
+          echo "Testing connectivity to Sonar host (no token displayed)..."
+          curl --fail --silent --show-error "$SONAR_HOST_URL/api/server/version" || { echo "Cannot reach Sonar at $SONAR_HOST_URL"; exit 1; }
+        # Do NOT echo SONAR_TOKEN anywhere
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
             -X
