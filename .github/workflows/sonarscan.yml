@@ -17,23 +17,30 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Check Sonar host and connectivity
         run: |
           if [ -z "$SONAR_HOST_URL" ]; then
-            echo "ERROR: SONAR_HOST_URL is not set"; exit 1
+            echo "ERROR: SONAR_HOST_URL is not set"
+            exit 1
           else
-            echo "SONAR_HOST_URL is set to $SONAR_HOST_URL"
+            echo "SONAR_HOST_URL is set"
           fi
-          echo "Testing connectivity to Sonar host (no token displayed)..."
-          curl --fail --silent --show-error "$SONAR_HOST_URL/api/server/version" || { echo "Cannot reach Sonar at $SONAR_HOST_URL"; exit 1; }
-        # Do NOT echo SONAR_TOKEN anywhere
+
+          echo "Testing connectivity to Sonar host..."
+          curl --fail --silent --show-error \
+            "$SONAR_HOST_URL/api/server/version" \
+            || { echo "Cannot reach Sonar at $SONAR_HOST_URL"; exit 1; }
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
         with:
           args: >
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.projectName=${{ github.event.repository.name }}
             -X
+
